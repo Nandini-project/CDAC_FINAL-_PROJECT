@@ -1,7 +1,7 @@
 from flask import Flask, render_template, request, redirect, url_for, session, flash
 
 app = Flask(__name__)
-app.secret_key = "secret123"
+app.secret_key = "super-secret-key-123"
 
 # In-memory storage
 users = {}   # {username: password}
@@ -47,6 +47,7 @@ def logout():
     return redirect(url_for("login"))
 @app.route("/dashboard")
 def dashboard():
+    print("SESSION:", session)
     if "user" not in session:
         return redirect(url_for("login"))
     return render_template("dashboard.html")

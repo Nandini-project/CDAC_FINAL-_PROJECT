@@ -1,7 +1,10 @@
 {% extends "base.html" %}
 {% block content %}
 
-<h2>Welcome {{ session.user }}</h2>
-<a href="/create">Create New Post</a>
+<h2>Welcome {{ session.get('user') }}</h2>
+
+<a href="/create">
+    <button>Create New Post</button>
+</a>
 
 {% endblock %}
