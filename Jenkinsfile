@@ -1,10 +1,13 @@
 pipeline {
-    // Run all stages on the docker-agent
     agent any
+
+    options {
+        timeout(time: 20, unit: 'MINUTES')
+    }
 
     environment {
         IMAGE_NAME = "nandinistr23/flask-blog"
-        IMAGE_TAG = "latest"
+        IMAGE_TAG  = "latest"
         SONAR_HOME = tool "sonar"
     }
 
@@ -12,25 +15,31 @@ pipeline {
 
         stage('Checkout') {
             steps {
-                git branch: 'main', url: 'https://github.com/Nandini-project/CDAC_FINAL-_PROJECT.git'
+                git branch: 'main',
+                    url: 'https://github.com/Nandini-project/CDAC_FINAL-_PROJECT.git'
             }
         }
 
         stage('SonarQube Analysis') {
             steps {
                 withSonarQubeEnv("sonar") {
-                    sh """
-                      $SONAR_HOME/bin/sonar-scanner \
-                      -Dsonar.projectName=flask_blog \
-                      -Dsonar.projectKey=flask_blog
-                    """
+                    withCredentials([
+                        string(credentialsId: 'sonar-token', variable: 'SONAR_TOKEN')
+                    ]) {
+                        sh """
+                          $SONAR_HOME/bin/sonar-scanner \
+                          -Dsonar.projectName=flask_blog \
+                          -Dsonar.projectKey=flask_blog \
+                          -Dsonar.login=$SONAR_TOKEN
+                        """
+                    }
                 }
             }
         }
 
         stage('SonarQube Quality Gate') {
             steps {
-                timeout(time: 2, unit: 'MINUTES') {
+                timeout(time: 5, unit: 'MINUTES') {
                     waitForQualityGate abortPipeline: true
                 }
             }
@@ -47,7 +56,7 @@ pipeline {
             }
         }
 
-        stage('Build Image') {
+        stage('Build Docker Image') {
             steps {
                 sh 'docker build -t $IMAGE_NAME:$IMAGE_TAG .'
             }
@@ -64,13 +73,15 @@ pipeline {
             }
         }
 
-        stage('Push Image') {
+        stage('Push Image to DockerHub') {
             steps {
-                withCredentials([usernamePassword(
-                    credentialsId: 'dockerhub',
-                    usernameVariable: 'DOCKER_USER',
-                    passwordVariable: 'DOCKER_PASS'
-                )]) {
+                withCredentials([
+                    usernamePassword(
+                        credentialsId: 'dockerhub',
+                        usernameVariable: 'DOCKER_USER',
+                        passwordVariable: 'DOCKER_PASS'
+                    )
+                ]) {
                     sh '''
                       echo $DOCKER_PASS | docker login -u $DOCKER_USER --password-stdin
                       docker push $IMAGE_NAME:$IMAGE_TAG
@@ -86,6 +97,15 @@ pipeline {
                   docker compose up -d --force-recreate
                 '''
             }
+        }
+    }
+
+    post {
+        success {
+            echo "✅ Pipeline completed successfully!"
+        }
+        failure {
+            echo "❌ Pipeline failed. Check logs."
         }
     }
 }
