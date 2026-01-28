@@ -2,7 +2,7 @@ version: "3.9"
 
 services:
   flask-blog:
-    image: sanjana038/flask-blog:latest
+    image: nandinistr23/flask-blog:latest
     container_name: flask-blog
     restart: always
 
