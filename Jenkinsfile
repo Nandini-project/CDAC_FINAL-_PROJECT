@@ -3,7 +3,7 @@ pipeline {
     agent { label 'docker-agent' }
 
     environment {
-        IMAGE_NAME = "sanjana038/flask-blog"
+        IMAGE_NAME = "nandinistr23/flask-blog"
         IMAGE_TAG = "latest"
         SONAR_HOME = tool "sonar"
     }
